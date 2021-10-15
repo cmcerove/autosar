@@ -189,6 +189,8 @@ class BehaviorParser(ElementParser):
                     pass #implement later
                 elif xmlElem.tag == 'STATIC-MEMORYS':
                     pass #implement later
+                elif xmlElem.tag == 'INCLUDED-DATA-TYPE-SETS':
+                    pass #implement later
                 else:
                     raise NotImplementedError(xmlElem.tag)
             return internalBehavior
