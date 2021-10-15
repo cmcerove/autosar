@@ -1,6 +1,7 @@
 import autosar.behavior
 from autosar.parser.parser_base import ElementParser
 from autosar.parser.constant_parser import ConstantParser
+from warnings import warn
 
 class BehaviorParser(ElementParser):
     def __init__(self,version=3.0):
@@ -236,6 +237,8 @@ class BehaviorParser(ElementParser):
                     xmlModeAccessPoints = xmlElem
                 elif xmlElem.tag=='DATA-RECEIVE-POINT-BY-ARGUMENTS':
                     xmlDataReceivePoints=xmlElem
+                elif xmlElem.tag == 'DATA-RECEIVE-POINT-BY-VALUES':
+                    pass  # implement later
                 elif xmlElem.tag=='DATA-SEND-POINTS':
                     xmlDataSendPoints=xmlElem
                 elif xmlElem.tag=='SERVER-CALL-POINTS':
@@ -576,13 +579,17 @@ class BehaviorParser(ElementParser):
     def parseDataReceivedEvent(self,xmlRoot,parent=None):
         name = self.parseTextNode(xmlRoot.find('SHORT-NAME'))
         startOnEventRef = self.parseTextNode(xmlRoot.find('START-ON-EVENT-REF'))
-        portTag = 'CONTEXT-R-PORT-REF' if self.version >= 4.0 else 'R-PORT-PROTOTYPE-REF'
-        dataInstanceRef=self.parseDataInstanceRef(xmlRoot.find('DATA-IREF'),portTag)
-        dataReceivedEvent=autosar.behavior.DataReceivedEvent(name, startOnEventRef, parent)
-        xmlModeDependency = xmlRoot.find('MODE-DEPENDENCY')
-        if xmlModeDependency is not None:
-            dataReceivedEvent.modeDependency = self._parseModeDependency(xmlModeDependency)
-        dataReceivedEvent.dataInstanceRef=dataInstanceRef
+        dataReceivedEvent = autosar.behavior.DataReceivedEvent(name, startOnEventRef, parent)
+        dataInstanceRefElement = xmlRoot.find('DATA-IREF')
+        if dataInstanceRefElement is not None:
+            portTag = 'CONTEXT-R-PORT-REF' if self.version >= 4.0 else 'R-PORT-PROTOTYPE-REF'
+            dataInstanceRef=self.parseDataInstanceRef(dataInstanceRefElement,portTag)
+            xmlModeDependency = xmlRoot.find('MODE-DEPENDENCY')
+            if xmlModeDependency is not None:
+                dataReceivedEvent.modeDependency = self._parseModeDependency(xmlModeDependency)
+            dataReceivedEvent.dataInstanceRef=dataInstanceRef
+        else:
+            warn(f'DATA-RECEIVED-EVENT, {name}, missing a DATA-IREF child', SyntaxWarning)
         return dataReceivedEvent
 
     def parseOperationInvokedEvent(self,xmlRoot,parent=None):
